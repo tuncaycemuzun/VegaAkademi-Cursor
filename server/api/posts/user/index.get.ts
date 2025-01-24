@@ -13,7 +13,6 @@ export default defineEventHandler(async (event) => {
             .populate('author', 'name')
             .populate('comments.author', 'name')
             .sort({ createdAt: -1 })
-
         const postsWithData = posts.map(post => {
             const postObject = post.toObject()
             return {
@@ -23,8 +22,9 @@ export default defineEventHandler(async (event) => {
                 commentsCount: post.comments.length
             }
         })
-
-        return postsWithData
+        return {
+            posts : postsWithData
+        }
     } catch (error: any) {
         throw createError({
             statusCode: error.statusCode || 500,
