@@ -1,8 +1,8 @@
 import { defineEventHandler, getRouterParam } from 'h3'
 import sanitizeHtml from 'sanitize-html'
-import Post from '~/server/models/Post'
+import { Post } from '~/server/models/Post'
 import { getAuthUser } from '~/server/utils/auth'
-import { sanitizeOptions } from '~/server/utils/sanitize'
+import { sanitizeOptions, sanitizeEditorJSContent } from '~/server/utils/sanitize'
 
 export default defineEventHandler(async (event) => {
     try {
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
             const postObject = post.toObject()
             return {
                 ...postObject,
-                content: sanitizeHtml(postObject.content, sanitizeOptions),
+                content: sanitizeEditorJSContent(postObject.content),
                 isLiked: post.likes.some((like: any) => like.toString() === user.id),
                 likesCount: post.likes.length,
                 commentsCount: post.comments.length
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
         const publicPost = {
             id: post.id,
             title: post.title,
-            content: sanitizeHtml(post.content, sanitizeOptions),
+            content: sanitizeEditorJSContent(post.content),
             slug: post.slug,
             author: post.author,
             tags: post.tags,

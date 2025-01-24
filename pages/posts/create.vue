@@ -3,14 +3,17 @@ definePageMeta({
   middleware: ['auth']
 })
 
-import QuillEditor from '~/components/QuillEditor.vue'
+import type { EditorJSContent } from '~/utils/editorjs-renderer'
 import type { Post } from '~/types/post'
 
 const router = useRouter()
 
 const newPost = ref({
   title: '',
-  content: '',
+  content: {
+    time: new Date().getTime(),
+    blocks: []
+  } as EditorJSContent,
   coverImage: ''
 })
 const error = ref('')
@@ -18,9 +21,9 @@ const selectedFile = ref<File | null>(null)
 const imagePreview = ref('')
 
 // Debug için content değişikliklerini izle
-watch(() => newPost.value.content, (newContent: string) => {
+watch(() => newPost.value.content, (newContent: EditorJSContent) => {
   console.log('Content changed:', newContent)
-})
+}, { deep: true })
 
 const handleImageSelect = async (event: Event) => {
   const input = event.target as HTMLInputElement
@@ -72,11 +75,7 @@ const handleSubmit = async () => {
     }
 
     // Boş içerik kontrolü
-    const tempDiv = document.createElement('div')
-    tempDiv.innerHTML = newPost.value.content
-    const textContent = tempDiv.textContent || tempDiv.innerText
-    
-    if (!textContent.trim()) {
+    if (!newPost.value.content.blocks.length) {
       error.value = 'Content is required'
       return
     }
@@ -155,11 +154,10 @@ const handleSubmit = async () => {
 
       <div class="flex-1">
         <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Content</label>
-        <div class="h-[500px] bg-white">
+        <div class="min-h-[500px] bg-white">
           <ClientOnly>
-            <QuillEditor
+            <EditorJS
               v-model="newPost.content"
-              placeholder="Write your post content here..."
             />
           </ClientOnly>
         </div>

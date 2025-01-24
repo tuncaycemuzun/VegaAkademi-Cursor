@@ -15,7 +15,7 @@ export type ICommentCreate = BaseComment;
 
 interface BasePost {
     title: string;
-    content: string;
+    content: string | EditorJSContent;
     slug: string;
     author: Types.ObjectId;
     tags: string[];
@@ -72,7 +72,7 @@ const commentSchema = new mongoose.Schema({
     },
     toJSON: { 
         virtuals: true,
-        transform: (_, ret) => {
+        transform: (_doc: any, ret: any) => {
             ret.id = ret._id.toString()
             delete ret._id
             delete ret.__v
@@ -84,7 +84,7 @@ const commentSchema = new mongoose.Schema({
     },
     toObject: { 
         virtuals: true,
-        transform: (_, ret) => {
+        transform: (_doc: any, ret: any) => {
             ret.id = ret._id.toString()
             delete ret._id
             delete ret.__v
@@ -103,7 +103,7 @@ const postSchema = new mongoose.Schema({
         trim: true
     },
     content: {
-        type: String,
+        type: mongoose.Schema.Types.Mixed,
         required: true
     },
     slug: {
@@ -147,7 +147,7 @@ const postSchema = new mongoose.Schema({
     },
     toJSON: { 
         virtuals: true,
-        transform: (_, ret) => {
+        transform: (_doc: any, ret: any) => {
             ret.id = ret._id.toString()
             delete ret._id
             delete ret.__v
@@ -159,7 +159,7 @@ const postSchema = new mongoose.Schema({
     },
     toObject: { 
         virtuals: true,
-        transform: (_, ret) => {
+        transform: (_doc: any, ret: any) => {
             ret.id = ret._id.toString()
             delete ret._id
             delete ret.__v
@@ -171,5 +171,4 @@ const postSchema = new mongoose.Schema({
     }
 })
 
-const Post = mongoose.models.Post || mongoose.model<PostDocument>('Post', postSchema)
-export default Post 
+export const Post = mongoose.models.Post || mongoose.model<PostDocument>('Post', postSchema) 

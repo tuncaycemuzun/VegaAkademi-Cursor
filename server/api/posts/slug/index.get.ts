@@ -1,6 +1,6 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
 import type { ApiError } from '~/server/types/api'
-import Post from '~/server/models/Post'
+import { Post } from '~/server/models/Post'
 import type { PostDocument, PostObject } from '~/server/models/Post'
 import { getAuthUser } from '~/server/utils/auth'
 import { Types } from 'mongoose'
@@ -28,9 +28,9 @@ export default defineEventHandler(async (event) => {
 
         const skip = (page - 1) * limit
 
-        const posts = await Post.find({ 
+        const posts = await Post.find({
             slug: { $regex: slug, $options: 'i' },
-            isActive: true 
+            isActive: true
         })
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -38,9 +38,9 @@ export default defineEventHandler(async (event) => {
             .populate('author', 'name')
             .populate('comments.author', 'name') as PostDocument[]
 
-        const total = await Post.countDocuments({ 
+        const total = await Post.countDocuments({
             slug: { $regex: slug, $options: 'i' },
-            isActive: true 
+            isActive: true
         })
 
         const response = posts.map(post => {

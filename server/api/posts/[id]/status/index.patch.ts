@@ -1,6 +1,6 @@
 import { defineEventHandler, getRouterParam } from 'h3'
 import mongoose from 'mongoose'
-import Post from '~/server/models/Post'
+import { Post } from '~/server/models/Post'
 import { getAuthUser } from '~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {

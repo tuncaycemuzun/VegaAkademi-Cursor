@@ -1,14 +1,14 @@
 import { defineEventHandler } from 'h3'
 import mongoose from 'mongoose'
 import sanitizeHtml from 'sanitize-html'
-import Post from '~/server/models/Post'
+import { Post } from '~/server/models/Post'
 import { getAuthUser } from '~/server/utils/auth'
 import { sanitizeOptions } from '~/server/utils/sanitize'
 
 export default defineEventHandler(async (event) => {
     try {
         const user = await getAuthUser(event)
-        
+
         const posts = await Post.find({ author: new mongoose.Types.ObjectId(user.id) })
             .populate('author', 'name')
             .populate('comments.author', 'name')

@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import type { ApiError, CreatePostRequest } from '~/server/types/api'
-import Post from '~/server/models/Post'
+import type { ApiError } from '~/server/types/api'
+import { Post } from '~/server/models/Post'
 import { getAuthUser } from '~/server/utils/auth'
 import { writeFile } from 'fs/promises'
 import { join } from 'path'
@@ -56,113 +56,77 @@ const generateUniqueSlug = async (baseSlug: string): Promise<string> => {
     }
 }
 
+// Function to save base64 image
 const saveBase64Image = async (base64Data: string): Promise<string> => {
     try {
-        // Debug için base64 verisinin ilk kısmını logla
-        console.log('Base64 data prefix:', base64Data.substring(0, 50))
-
-        // base64 formatını kontrol et
-        if (!base64Data.startsWith('data:image/')) {
-            throw new Error('Invalid base64 format: Does not start with data:image/')
+        // Extract the actual base64 data
+        const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/)
+        
+        if (!matches || matches.length !== 3) {
+            throw new Error('Invalid base64 string')
         }
 
-        // base64'ün data kısmını ve dosya tipini ayır
-        const matches = base64Data.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/)
-        
-        if (!matches) {
-            throw new Error('Invalid base64 format: Could not parse image data')
-        }
+        const imageBuffer = Buffer.from(matches[2], 'base64')
+        const mimeType = matches[1]
+        const extension = mimeType.split('/')[1]
+        const filename = `${randomUUID()}.${extension}`
+        const uploadDir = join(process.cwd(), 'public', 'uploads')
+        const filePath = join(uploadDir, filename)
 
-        const fileType = matches[1].toLowerCase()
-        const base64Image = matches[2]
-
-        // Desteklenen formatları kontrol et
-        const supportedTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp']
-        if (!supportedTypes.includes(fileType)) {
-            throw new Error(`Unsupported image type: ${fileType}`)
-        }
-
-        // Benzersiz dosya adı oluştur
-        const fileName = `${randomUUID()}.${fileType}`
-        
-        // Base64'ü buffer'a çevir
-        const buffer = Buffer.from(base64Image, 'base64')
-        
-        // Dosya yolunu oluştur (public/uploads klasörüne kaydet)
-        const uploadDir = join(process.cwd(), 'public/uploads')
-        const filePath = join(uploadDir, fileName)
-        
-        // Dosyayı kaydet
-        await writeFile(filePath, buffer)
-        
-        return fileName
-    } catch (error) {
-        console.error('Error in saveBase64Image:', error)
-        throw error
+        await writeFile(filePath, imageBuffer)
+        return filename
+    } catch (error: any) {
+        console.error('Error saving image:', error)
+        throw new Error('Failed to save image')
     }
 }
 
 export default defineEventHandler(async (event) => {
     try {
-        const user = await getAuthUser(event)
+        const session = await getAuthUser(event)
         const body = await readBody(event)
 
-        const { title, content, coverImage } = body
-
-        // Debug için body'i logla
-        console.log('Received post data:', {
-            title,
-            contentLength: content?.length,
-            coverImageLength: coverImage?.length
-        })
-
-        if (!title || !content) {
+        // Validate required fields
+        if (!body.title?.trim()) {
             throw createError({
                 statusCode: 400,
-                message: 'Title and content are required'
+                message: 'Title is required'
             })
         }
-        
-        // Generate base slug
-        const baseSlug = createSlug(title)
-        
-        // Get unique slug
-        const slug = await generateUniqueSlug(baseSlug)
 
-        let savedImageName = null
-        if (coverImage) {
-            try {
-                savedImageName = await saveBase64Image(coverImage)
-                console.log('Image saved successfully:', savedImageName)
-            } catch (error: any) {
-                console.error('Image save error:', error.message)
-                throw createError({
-                    statusCode: 400,
-                    message: `Failed to save image: ${error.message}`
-                })
-            }
+        if (!body.content?.blocks?.length) {
+            throw createError({
+                statusCode: 400,
+                message: 'Content is required'
+            })
         }
 
+        // Generate slug
+        const baseSlug = createSlug(body.title)
+        const slug = await generateUniqueSlug(baseSlug)
+
+        // Handle cover image if exists
+        let coverImage = null
+        if (body.coverImage) {
+            coverImage = await saveBase64Image(body.coverImage)
+        }
+
+        // Create post
         const post = await Post.create({
-            title,
-            content,
+            title: body.title.trim(),
+            content: body.content,
             slug,
-            coverImage: savedImageName,
-            author: user.id,
+            coverImage,
+            author: session.id,
             status: 'draft'
         })
 
-        await post.populate('author', 'name')
-
-        return post.toObject()
+        return post
     } catch (error: any) {
         console.error('Create post error:', error)
-        if (error.statusCode) {
-            throw error
-        }
         throw createError({
-            statusCode: 500,
-            message: error.message || 'Internal server error'
+            statusCode: error.statusCode || 500,
+            message: error.message || 'Failed to create post'
         })
     }
 }) 

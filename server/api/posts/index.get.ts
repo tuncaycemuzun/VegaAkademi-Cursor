@@ -1,9 +1,10 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
 import type { ApiError } from '~/server/types/api'
-import Post from '~/server/models/Post'
+import { Post } from '~/server/models/Post'
 import type { PostDocument, PostObject } from '~/server/models/Post'
 import { getAuthUser } from '~/server/utils/auth'
 import { Types } from 'mongoose'
+import { sanitizeEditorJSContent } from '~/server/utils/sanitize'
 
 export default defineEventHandler(async (event) => {
     try {
@@ -23,8 +24,12 @@ export default defineEventHandler(async (event) => {
 
         const total = await Post.countDocuments({ isActive: true })
 
-        // Convert posts to objects
-        const response = posts.map(post => post.toObject() as PostObject)
+        // Convert posts to objects and sanitize content
+        const response = posts.map(post => {
+            const postObj = post.toObject() as PostObject
+            postObj.content = sanitizeEditorJSContent(postObj.content)
+            return postObj
+        })
 
         // Try to get authenticated user (optional)
         try {

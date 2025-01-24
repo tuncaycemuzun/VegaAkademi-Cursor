@@ -1,7 +1,7 @@
 import { defineEventHandler, getRouterParam, createError } from 'h3'
 import mongoose from 'mongoose'
 import type { ApiError } from '~/server/types/api'
-import Post from '~/server/models/Post'
+import { Post } from '~/server/models/Post'
 import type { PostDocument } from '~/server/models/Post'
 import { getAuthUser } from '~/server/utils/auth'
 

@@ -4,6 +4,7 @@ definePageMeta({
 })
 
 import type { Post } from '~/types/post'
+import { renderEditorJSContent } from '~/utils/editorjs-renderer'
 
 interface User {
     id: string
@@ -40,6 +41,11 @@ const isLiked = computed(() => post.value?.isLiked || false)
 const likeCount = computed(() => post.value?.likes?.length || 0)
 const commentCount = computed(() => post.value?.comments?.length || 0)
 
+const renderedContent = computed(() => {
+    if (!post.value?.content) return ''
+    return renderEditorJSContent(post.value.content)
+})
+
 const toggleStatus = async () => {
     try {
         const { error } = await useFetchAuth(`/api/posts/${post.value?.id}/status`, {
@@ -55,12 +61,10 @@ const toggleStatus = async () => {
 }
 
 const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString('tr-TR', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: 'numeric'
     })
 }
 
@@ -132,160 +136,43 @@ const submitComment = async () => {
 
 <template>
     <div v-if="!postError">
-        <div v-if="post" class="max-w-4xl mx-auto">
-            <div class="mb-6 flex justify-between items-center">
-                <h1 class="text-4xl font-bold text-gray-900">{{ post.title }}</h1>
-                <div v-if="isOwner" class="flex items-center space-x-2">
-                    <span class="text-sm text-gray-600">{{ post.isActive ? 'Active' : 'Inactive' }}</span>
-                    <button 
-                        @click="toggleStatus" 
-                        type="button" 
-                        :class="[
-                            'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-custom-500 focus:ring-offset-2',
-                            post.isActive ? 'bg-green-500' : 'bg-gray-200'
-                        ]"
-                        role="switch"
-                        :aria-checked="post.isActive"
-                    >
-                        <span 
-                            :class="[
-                                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                                post.isActive ? 'translate-x-5' : 'translate-x-0'
-                            ]"
-                        />
-                    </button>
-                </div>
-            </div>
-
-            <!-- Post meta bilgileri -->
-            <div class="flex justify-between items-center mb-8 text-sm text-gray-500">
-                <div class="flex items-center space-x-4">
-                    <span class="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        {{ post.author.name }}
-                    </span>
-                    <span class="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        {{ formatDate(post.createdAt) }}
-                    </span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <button 
-                        @click="handleLike" 
-                        class="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors"
-                        :class="{ 'text-red-500': isLiked }"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" 
-                            class="h-5 w-5" 
-                            :class="{ 'fill-current': isLiked }"
-                            :fill="isLiked ? 'currentColor' : 'none'"
-                            viewBox="0 0 24 24" 
-                            stroke="currentColor"
-                        >
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                        <span>{{ likeCount }}</span>
-                    </button>
-                    <button class="flex items-center space-x-1 text-gray-500 hover:text-gray-700 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                        </svg>
-                        <span>{{ commentCount }}</span>
-                    </button>
-                    <button @click="handleShare" class="flex items-center text-gray-500 hover:text-gray-700 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                        </svg>
-                        Share
-                    </button>
-                </div>
-            </div>
-
+        <div v-if="post" class="max-w-4xl mx-auto px-4 py-8">
             <!-- Cover Image -->
-            <div v-if="post.coverImage" class="mb-8">
-                <img :src="'/uploads/' + post.coverImage" :alt="post.title"
-                    class="w-full rounded-lg object-cover max-h-96" />
+            <img
+                v-if="post.coverImage"
+                :src="`/uploads/${post.coverImage}`"
+                :alt="post.title"
+                class="w-full h-64 object-cover rounded-lg mb-8"
+            />
+
+            <!-- Title -->
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ post.title }}</h1>
+
+            <!-- Metadata -->
+            <div class="flex items-center text-sm text-gray-500 mb-8">
+                <span>{{ formatDate(post.createdAt) }}</span>
+                <span class="mx-2">•</span>
+                <span>{{ post.author.name }}</span>
             </div>
 
             <!-- Content -->
-            <div class="prose max-w-none" v-html="post.content"></div>
+            <div class="prose prose-lg max-w-none">
+                <EditorJSRenderer :content="post.content" />
+            </div>
 
-            <!-- Comments Section -->
-            <div class="mt-12 bg-white rounded-xl shadow-sm p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-8">Comments</h2>
-                
-                <!-- New Comment Form -->
-                <div class="mb-8">
-                    <div class="flex items-start space-x-4">
-                        <img 
-                            :src="`https://ui-avatars.com/api/?name=${currentUser?.name || 'Guest'}&background=random`"
-                            :alt="currentUser?.name || 'Guest'"
-                            class="w-10 h-10 rounded-full"
-                        />
-                        <div class="flex-1">
-                            <textarea
-                                v-model="newComment"
-                                rows="3"
-                                placeholder="Write a comment..."
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-custom-500 focus:border-transparent resize-none"
-                                :disabled="isSubmitting"
-                            ></textarea>
-                            <div class="mt-2 flex justify-end">
-                                <button
-                                    @click="submitComment"
-                                    :disabled="isSubmitting || !newComment.trim()"
-                                    class="px-4 py-2 bg-gray-custom-900 text-white rounded-md hover:bg-gray-custom-800 focus:outline-none focus:ring-2 focus:ring-gray-custom-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                                >
-                                    {{ isSubmitting ? 'Posting...' : 'Post Comment' }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comments List -->
-                <div v-if="post.comments?.length" class="space-y-6">
-                    <div 
-                        v-for="comment in post.comments" 
-                        :key="comment.id" 
-                        class="flex space-x-4 p-4 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-                    >
-                        <img 
-                            :src="`https://ui-avatars.com/api/?name=${comment.author.name}&background=random`"
-                            :alt="comment.author.name" 
-                            class="w-10 h-10 rounded-full"
-                        />
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-medium text-gray-900">{{ comment.author.name }}</span>
-                                <span class="text-sm text-gray-500">{{ formatDate(comment.createdAt) }}</span>
-                            </div>
-                            <p class="text-gray-700 whitespace-pre-wrap">{{ comment.content }}</p>
-                        </div>
-                    </div>
-                </div>
-                <div v-else class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    <p class="font-medium">No comments yet</p>
-                    <p class="text-sm mt-1">Be the first to share your thoughts!</p>
-                </div>
+            <!-- Actions -->
+            <div class="mt-8 flex justify-end space-x-4">
+                <NuxtLink
+                    to="/posts"
+                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                    Back to Posts
+                </NuxtLink>
             </div>
         </div>
 
-        <div v-else class="flex items-center justify-center min-h-screen">
-            <div class="text-center">
-                <div class="text-4xl font-bold text-gray-900 mb-4">Loading...</div>
-            </div>
+        <div v-else class="text-center py-12">
+            <p class="text-gray-500">Loading post...</p>
         </div>
     </div>
 
@@ -307,7 +194,7 @@ const submitComment = async () => {
                         :value="shareUrl"
                         readonly
                         class="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-custom-50 text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-custom-500"
-                        @focus="(e) => (e.target as HTMLInputElement).select()"
+                        @focus="(e: FocusEvent) => (e.target as HTMLInputElement).select()"
                     />
                     <button
                         @click="copyToClipboard"
@@ -343,5 +230,58 @@ const submitComment = async () => {
     max-width: 100%;
     height: auto;
     border-radius: 0.5rem;
+}
+
+/* Editor.js specific styles */
+.checklist {
+    @apply space-y-2;
+}
+
+.checklist-item {
+    @apply flex items-center space-x-2;
+}
+
+.checklist-item input[type="checkbox"] {
+    @apply h-4 w-4 text-gray-600 rounded border-gray-300;
+}
+
+.checklist-item span {
+    @apply text-gray-700;
+}
+
+blockquote {
+    @apply border-l-4 border-gray-300 pl-4 italic my-4;
+}
+
+blockquote footer {
+    @apply text-gray-600 text-sm mt-2 not-italic;
+}
+
+pre {
+    @apply bg-gray-100 p-4 rounded-md overflow-x-auto my-4;
+}
+
+code {
+    @apply font-mono text-sm;
+}
+
+table {
+    @apply min-w-full border border-gray-200 my-4;
+}
+
+td {
+    @apply border border-gray-200 p-2;
+}
+
+hr {
+    @apply my-8 border-t-2 border-gray-200;
+}
+
+figure {
+    @apply my-4;
+}
+
+figcaption {
+    @apply text-center text-sm text-gray-600 mt-2;
 }
 </style>

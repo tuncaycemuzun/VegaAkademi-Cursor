@@ -1,7 +1,18 @@
+interface EditorJSBlock {
+  id: string
+  type: string
+  data: any
+}
+
+interface EditorJSContent {
+  time: number
+  blocks: EditorJSBlock[]
+}
+
 export interface Post {
   id: string
   title: string
-  content: string
+  content: string | EditorJSContent
   slug: string
   author: {
     id: string
