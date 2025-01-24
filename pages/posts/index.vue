@@ -36,7 +36,7 @@ const getContentPreview = (content: any) => {
       </div>
     </div>
 
-    <div v-else>
+    <div v-else class="bg-white rounded-2xl border-2 border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] p-6">
       <!-- Posts Grid -->
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <!-- Create Post Card -->

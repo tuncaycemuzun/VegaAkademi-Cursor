@@ -140,7 +140,17 @@ const submitComment = async () => {
             <!-- Content -->
             <div class="bg-white rounded-2xl border-2 border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] p-6 mb-8">
                 <div class="prose prose-lg max-w-none">
-                    <EditorJSRenderer :content="post.content" />
+                    <EditorJSRenderer v-if="typeof post.content !== 'string'" :content="post.content" />
+                    <div v-else v-html="post.content"></div>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div v-if="post.tags?.length" class="bg-white rounded-2xl border-2 border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] p-6 mb-8">
+                <div class="flex flex-wrap gap-2">
+                    <span v-for="tag in post.tags" :key="tag" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors">
+                        #{{ tag }}
+                    </span>
                 </div>
             </div>
 

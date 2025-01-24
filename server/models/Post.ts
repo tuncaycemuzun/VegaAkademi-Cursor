@@ -1,4 +1,5 @@
 import mongoose, { Document, Types } from 'mongoose'
+import type { EditorJSContent } from '~/utils/editorjs-renderer'
 
 interface BaseComment {
     content: string;
@@ -102,14 +103,14 @@ const postSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    content: {
-        type: mongoose.Schema.Types.Mixed,
-        required: true
-    },
     slug: {
         type: String,
         required: true,
         unique: true
+    },
+    content: {
+        type: mongoose.Schema.Types.Mixed as any,
+        required: true
     },
     coverImage: {
         type: String,
@@ -125,15 +126,30 @@ const postSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    tags: [{
-        type: String,
-        trim: true
-    }],
     likes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    comments: [commentSchema],
+    comments: [{
+        author: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        content: {
+            type: String,
+            required: true
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    tags: [{
+        type: String,
+        lowercase: true,
+        trim: true
+    }],
     isActive: {
         type: Boolean,
         default: true

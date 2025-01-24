@@ -1,6 +1,7 @@
-import { H3Event } from 'h3'
+import { H3Event, createError } from 'h3'
 import jwt from 'jsonwebtoken'
 import User from '../models/User'
+import type { IUser } from '../models/User'
 
 export const getAuthUser = async (event: H3Event) => {
     const token = event.headers.get('authorization')?.replace('Bearer ', '')
@@ -14,7 +15,7 @@ export const getAuthUser = async (event: H3Event) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as jwt.JwtPayload
-        const user = await User.findById(decoded.id).select('-password')
+        const user = await User.findById(decoded.id).select('-password') as IUser | null
         
         if (!user) {
             throw createError({

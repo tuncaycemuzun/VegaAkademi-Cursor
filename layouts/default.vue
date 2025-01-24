@@ -87,7 +87,7 @@ onClickOutside(dropdownRef, () => {
 
     <!-- Main Content -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="bg-white rounded-lg shadow-sm p-6 h-full border border-gray-200">
+      <div class="rounded-lg p-6 h-full">
         <slot />
       </div>
     </main>

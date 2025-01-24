@@ -7,7 +7,7 @@ export function useFetchAuth<T>(url: string, options: UseFetchOptions<T> = {}) {
     key: url,
     headers: {
       ...options.headers,
-      Authorization: `Bearer ${token.value}`
+      ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
     },
     // Hata yönetimi için
     onResponseError({ response }) {

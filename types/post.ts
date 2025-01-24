@@ -33,6 +33,7 @@ export interface Post {
   isLiked?: boolean
   isActive: boolean
   coverImage?: string | null
+  tags?: string[]
 }
 
 export interface PostsResponse {
