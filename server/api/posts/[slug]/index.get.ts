@@ -6,11 +6,16 @@ import { sanitizeOptions } from '~/server/utils/sanitize'
 
 export default defineEventHandler(async (event) => {
     try {
+        
+
         const slug = getRouterParam(event, 'slug')
         const post = await Post.findOne({ slug, isActive: true })
             .populate('author', 'name')
             .populate('comments.author', 'name')
         
+            
+
+        console.log('post', post)
         if (!post) {
             throw createError({
                 statusCode: 404,
