@@ -4,11 +4,9 @@ import type { ApiError, CreateCommentRequest } from '~/server/types/api'
 import Post from '~/server/models/Post'
 import type { PostDocument, ICommentCreate } from '~/server/models/Post'
 import { getAuthUser } from '~/server/utils/auth'
-import { Types } from 'mongoose'
 
 export default defineEventHandler(async (event) => {
     try {
-        // Auth is required for commenting
         const user = await getAuthUser(event)
         const id = getRouterParam(event, 'id')
         const { content } = await readBody<CreateCommentRequest>(event)
@@ -23,7 +21,7 @@ export default defineEventHandler(async (event) => {
 
         const comment: ICommentCreate = {
             content,
-            author: new Types.ObjectId(user.id)
+            author: new mongoose.Types.ObjectId(user.id)
         }
 
         post.comments.push(comment)

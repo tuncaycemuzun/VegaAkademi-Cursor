@@ -7,6 +7,7 @@ import { Types } from 'mongoose'
 
 export default defineEventHandler(async (event) => {
     try {
+        // Get post by slug
         const slug = getRouterParam(event, 'slug')
         const post = await Post.findOne({ slug, isActive: true })
             .populate('author', 'name')
@@ -19,20 +20,18 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Try to get authenticated user (optional)
-        let user = null
-        try {
-            user = await getAuthUser(event)
-        } catch (error) {
-            // Ignore auth errors
-        }
-
+        // Convert post to object
         const response = post.toObject() as PostObject
-        
-        // Add like status if user is authenticated
-        if (user) {
-            const checkLike = (like: Types.ObjectId) => like.toString() === user.id
-            response.isLiked = post.likes.some(checkLike)
+
+        // Try to get authenticated user (optional)
+        try {
+            const user = await getAuthUser(event)
+            if (user) {
+                const checkLike = (like: Types.ObjectId) => like.toString() === user.id
+                response.isLiked = post.likes.some(checkLike)
+            }
+        } catch {
+            // User is not authenticated, isLiked will remain undefined
         }
 
         return response

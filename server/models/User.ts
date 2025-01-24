@@ -41,9 +41,38 @@ const userSchema = new mongoose.Schema({
         default: 'user'
     }
 }, {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    timestamps: {
+        currentTime: () => {
+            const now = new Date()
+            return new Date(now.getTime() - (3 * 60 * 60 * 1000)) // UTC-3
+        }
+    },
+    toJSON: { 
+        virtuals: true,
+        transform: (_, ret) => {
+            ret.id = ret._id.toString()
+            delete ret._id
+            delete ret.__v
+            if (ret.password) delete ret.password
+            // Convert dates to UTC-3
+            if (ret.createdAt) ret.createdAt = new Date(new Date(ret.createdAt).getTime() - (3 * 60 * 60 * 1000))
+            if (ret.updatedAt) ret.updatedAt = new Date(new Date(ret.updatedAt).getTime() - (3 * 60 * 60 * 1000))
+            return ret
+        }
+    },
+    toObject: { 
+        virtuals: true,
+        transform: (_, ret) => {
+            ret.id = ret._id.toString()
+            delete ret._id
+            delete ret.__v
+            if (ret.password) delete ret.password
+            // Convert dates to UTC-3
+            if (ret.createdAt) ret.createdAt = new Date(new Date(ret.createdAt).getTime() - (3 * 60 * 60 * 1000))
+            if (ret.updatedAt) ret.updatedAt = new Date(new Date(ret.updatedAt).getTime() - (3 * 60 * 60 * 1000))
+            return ret
+        }
+    }
 })
 
 // Hash password before saving

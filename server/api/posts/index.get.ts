@@ -7,12 +7,13 @@ import { Types } from 'mongoose'
 
 export default defineEventHandler(async (event) => {
     try {
+        // Get pagination parameters
         const query = getQuery(event)
         const page = Number(query.page) || 1
         const limit = Number(query.limit) || 10
-
         const skip = (page - 1) * limit
 
+        // Get posts with pagination
         const posts = await Post.find({ isActive: true })
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -22,23 +23,25 @@ export default defineEventHandler(async (event) => {
 
         const total = await Post.countDocuments({ isActive: true })
 
-        // Try to get authenticated user (optional)
-        let user = null
-        try {
-            user = await getAuthUser(event)
-        } catch (error) {
-            // Ignore auth errors
-        }
+        // Convert posts to objects
+        const response = posts.map(post => post.toObject() as PostObject)
 
-        const response = posts.map(post => {
-            const postObj = post.toObject() as PostObject
-            // Add like status if user is authenticated
+        // Try to get authenticated user (optional)
+        try {
+            const user = await getAuthUser(event)
             if (user) {
-                const checkLike = (like: Types.ObjectId) => like.toString() === user.id
-                postObj.isLiked = post.likes.some(checkLike)
+                // Add like status for authenticated user
+                response.forEach(postObj => {
+                    const post = posts.find(p => p.id === postObj.id)
+                    if (post) {
+                        const checkLike = (like: Types.ObjectId) => like.toString() === user.id
+                        postObj.isLiked = post.likes.some(checkLike)
+                    }
+                })
             }
-            return postObj
-        })
+        } catch {
+            // User is not authenticated, isLiked will remain undefined
+        }
 
         return {
             posts: response,

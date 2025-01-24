@@ -4,11 +4,9 @@ import type { ApiError } from '~/server/types/api'
 import Post from '~/server/models/Post'
 import type { PostDocument } from '~/server/models/Post'
 import { getAuthUser } from '~/server/utils/auth'
-import { Types } from 'mongoose'
 
 export default defineEventHandler(async (event) => {
     try {
-        // Auth is required for liking posts
         const user = await getAuthUser(event)
         const id = getRouterParam(event, 'id')
         
@@ -21,11 +19,11 @@ export default defineEventHandler(async (event) => {
         }
 
         const likeIndex = post.likes.findIndex(
-            (like: Types.ObjectId) => like.toString() === user.id
+            (like: mongoose.Types.ObjectId) => like.toString() === user.id
         )
 
         if (likeIndex === -1) {
-            post.likes.push(new Types.ObjectId(user.id))
+            post.likes.push(new mongoose.Types.ObjectId(user.id))
         } else {
             post.likes.splice(likeIndex, 1)
         }

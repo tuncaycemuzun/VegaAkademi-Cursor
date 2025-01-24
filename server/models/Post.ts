@@ -63,9 +63,36 @@ const commentSchema = new mongoose.Schema({
         required: true
     }
 }, {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    timestamps: {
+        currentTime: () => {
+            const now = new Date()
+            return new Date(now.getTime() - (3 * 60 * 60 * 1000)) // UTC-3
+        }
+    },
+    toJSON: { 
+        virtuals: true,
+        transform: (_, ret) => {
+            ret.id = ret._id.toString()
+            delete ret._id
+            delete ret.__v
+            // Convert dates to UTC-3
+            if (ret.createdAt) ret.createdAt = new Date(new Date(ret.createdAt).getTime() - (3 * 60 * 60 * 1000))
+            if (ret.updatedAt) ret.updatedAt = new Date(new Date(ret.updatedAt).getTime() - (3 * 60 * 60 * 1000))
+            return ret
+        }
+    },
+    toObject: { 
+        virtuals: true,
+        transform: (_, ret) => {
+            ret.id = ret._id.toString()
+            delete ret._id
+            delete ret.__v
+            // Convert dates to UTC-3
+            if (ret.createdAt) ret.createdAt = new Date(new Date(ret.createdAt).getTime() - (3 * 60 * 60 * 1000))
+            if (ret.updatedAt) ret.updatedAt = new Date(new Date(ret.updatedAt).getTime() - (3 * 60 * 60 * 1000))
+            return ret
+        }
+    }
 })
 
 const postSchema = new mongoose.Schema({
@@ -107,9 +134,36 @@ const postSchema = new mongoose.Schema({
         default: true
     }
 }, {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    timestamps: {
+        currentTime: () => {
+            const now = new Date()
+            return new Date(now.getTime() - (3 * 60 * 60 * 1000)) // UTC-3
+        }
+    },
+    toJSON: { 
+        virtuals: true,
+        transform: (_, ret) => {
+            ret.id = ret._id.toString()
+            delete ret._id
+            delete ret.__v
+            // Convert dates to UTC-3
+            if (ret.createdAt) ret.createdAt = new Date(new Date(ret.createdAt).getTime() - (3 * 60 * 60 * 1000))
+            if (ret.updatedAt) ret.updatedAt = new Date(new Date(ret.updatedAt).getTime() - (3 * 60 * 60 * 1000))
+            return ret
+        }
+    },
+    toObject: { 
+        virtuals: true,
+        transform: (_, ret) => {
+            ret.id = ret._id.toString()
+            delete ret._id
+            delete ret.__v
+            // Convert dates to UTC-3
+            if (ret.createdAt) ret.createdAt = new Date(new Date(ret.createdAt).getTime() - (3 * 60 * 60 * 1000))
+            if (ret.updatedAt) ret.updatedAt = new Date(new Date(ret.updatedAt).getTime() - (3 * 60 * 60 * 1000))
+            return ret
+        }
+    }
 })
 
 const Post = mongoose.models.Post || mongoose.model<PostDocument>('Post', postSchema)
