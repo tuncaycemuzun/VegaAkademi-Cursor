@@ -18,7 +18,7 @@ const selectedFile = ref<File | null>(null)
 const imagePreview = ref('')
 
 // Debug için content değişikliklerini izle
-watch(() => newPost.value.content, (newContent) => {
+watch(() => newPost.value.content, (newContent: string) => {
   console.log('Content changed:', newContent)
 })
 
