@@ -19,9 +19,10 @@ interface BasePost {
     slug: string;
     author: Types.ObjectId;
     tags: string[];
-    status: 'draft' | 'published';
+    status: 'draft' | 'published' | 'archived';
     likes: Types.ObjectId[];
     isActive: boolean;
+    coverImage: string | null;
 }
 
 export interface IPost extends Document, BasePost {
@@ -110,6 +111,15 @@ const postSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    coverImage: {
+        type: String,
+        default: null
+    },
+    status: {
+        type: String,
+        enum: ['draft', 'published', 'archived'],
+        default: 'draft'
+    },
     author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -119,11 +129,6 @@ const postSchema = new mongoose.Schema({
         type: String,
         trim: true
     }],
-    status: {
-        type: String,
-        enum: ['draft', 'published'],
-        default: 'published'
-    },
     likes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'

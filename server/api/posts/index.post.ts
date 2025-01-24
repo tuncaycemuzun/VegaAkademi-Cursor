@@ -2,9 +2,9 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import type { ApiError, CreatePostRequest } from '~/server/types/api'
 import Post from '~/server/models/Post'
 import { getAuthUser } from '~/server/utils/auth'
-import { Types } from 'mongoose'
-import sanitizeHtml from 'sanitize-html'
-import { sanitizeOptions } from '~/server/utils/sanitize'
+import { writeFile } from 'fs/promises'
+import { join } from 'path'
+import { randomUUID } from 'crypto'
 
 const createSlug = (text: string): string => {
     const trMap: { [key: string]: string } = {
@@ -56,36 +56,113 @@ const generateUniqueSlug = async (baseSlug: string): Promise<string> => {
     }
 }
 
+const saveBase64Image = async (base64Data: string): Promise<string> => {
+    try {
+        // Debug için base64 verisinin ilk kısmını logla
+        console.log('Base64 data prefix:', base64Data.substring(0, 50))
+
+        // base64 formatını kontrol et
+        if (!base64Data.startsWith('data:image/')) {
+            throw new Error('Invalid base64 format: Does not start with data:image/')
+        }
+
+        // base64'ün data kısmını ve dosya tipini ayır
+        const matches = base64Data.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/)
+        
+        if (!matches) {
+            throw new Error('Invalid base64 format: Could not parse image data')
+        }
+
+        const fileType = matches[1].toLowerCase()
+        const base64Image = matches[2]
+
+        // Desteklenen formatları kontrol et
+        const supportedTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp']
+        if (!supportedTypes.includes(fileType)) {
+            throw new Error(`Unsupported image type: ${fileType}`)
+        }
+
+        // Benzersiz dosya adı oluştur
+        const fileName = `${randomUUID()}.${fileType}`
+        
+        // Base64'ü buffer'a çevir
+        const buffer = Buffer.from(base64Image, 'base64')
+        
+        // Dosya yolunu oluştur (public/uploads klasörüne kaydet)
+        const uploadDir = join(process.cwd(), 'public/uploads')
+        const filePath = join(uploadDir, fileName)
+        
+        // Dosyayı kaydet
+        await writeFile(filePath, buffer)
+        
+        return fileName
+    } catch (error) {
+        console.error('Error in saveBase64Image:', error)
+        throw error
+    }
+}
+
 export default defineEventHandler(async (event) => {
     try {
         const user = await getAuthUser(event)
-        const { title, content, tags } = await readBody<CreatePostRequest>(event)
+        const body = await readBody(event)
 
+        const { title, content, coverImage } = body
+
+        // Debug için body'i logla
+        console.log('Received post data:', {
+            title,
+            contentLength: content?.length,
+            coverImageLength: coverImage?.length
+        })
+
+        if (!title || !content) {
+            throw createError({
+                statusCode: 400,
+                message: 'Title and content are required'
+            })
+        }
+        
         // Generate base slug
         const baseSlug = createSlug(title)
         
         // Get unique slug
         const slug = await generateUniqueSlug(baseSlug)
 
-        // Sanitize HTML content
-        const sanitizedContent = sanitizeHtml(content, sanitizeOptions)
+        let savedImageName = null
+        if (coverImage) {
+            try {
+                savedImageName = await saveBase64Image(coverImage)
+                console.log('Image saved successfully:', savedImageName)
+            } catch (error: any) {
+                console.error('Image save error:', error.message)
+                throw createError({
+                    statusCode: 400,
+                    message: `Failed to save image: ${error.message}`
+                })
+            }
+        }
 
         const post = await Post.create({
             title,
-            content: sanitizedContent,
+            content,
             slug,
-            tags,
-            author: new Types.ObjectId(user.id)
+            coverImage: savedImageName,
+            author: user.id,
+            status: 'draft'
         })
 
+        await post.populate('author', 'name')
+
         return post.toObject()
-    } catch (error) {
-        if ((error as ApiError).statusCode) {
+    } catch (error: any) {
+        console.error('Create post error:', error)
+        if (error.statusCode) {
             throw error
         }
-        throw createError<ApiError>({
+        throw createError({
             statusCode: 500,
-            message: (error as Error).message || 'Internal server error'
+            message: error.message || 'Internal server error'
         })
     }
 }) 

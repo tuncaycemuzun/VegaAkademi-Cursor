@@ -6,16 +6,11 @@ import { sanitizeOptions } from '~/server/utils/sanitize'
 
 export default defineEventHandler(async (event) => {
     try {
-        
-
         const slug = getRouterParam(event, 'slug')
-        const post = await Post.findOne({ slug, isActive: true })
-            .populate('author', 'name')
+        const post = await Post.findOne({ slug })
+            .populate('author', 'id name')
             .populate('comments.author', 'name')
-        
-            
 
-        console.log('post', post)
         if (!post) {
             throw createError({
                 statusCode: 404,
@@ -31,6 +26,17 @@ export default defineEventHandler(async (event) => {
             // Ignore auth errors
         }
 
+        // Post aktif değilse kontrol yap
+        if (!post.isActive) {
+            // Eğer kullanıcı giriş yapmamışsa veya post sahibi değilse erişimi engelle
+            if (!user || user.id !== post.author.id) {
+                throw createError({
+                    statusCode: 404,
+                    message: 'Post not found'
+                })
+            }
+        }
+
         // If user is authenticated, add user-specific data
         if (user) {
             const postObject = post.toObject()
@@ -42,7 +48,7 @@ export default defineEventHandler(async (event) => {
                 commentsCount: post.comments.length
             }
         }
-        
+
         // For non-authenticated users, return limited data
         const publicPost = {
             id: post.id,
@@ -56,7 +62,7 @@ export default defineEventHandler(async (event) => {
             likesCount: post.likes.length,
             commentsCount: post.comments.length
         }
-        
+
         return publicPost
     } catch (error: any) {
         throw createError({

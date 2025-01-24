@@ -15,7 +15,7 @@ const emit = defineEmits<{
     <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
       <div class="flex min-h-screen items-center justify-center text-center">
         <div class="fixed inset-0 transition-opacity" @click="emit('close')">
-          <div class="absolute inset-0 bg-gray-custom-500 opacity-75"></div>
+          <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
         </div>
 
         <div
@@ -27,7 +27,7 @@ const emit = defineEmits<{
           <div class="absolute top-0 right-0 pt-4 pr-4 z-10">
             <button
               type="button"
-              class="rounded-md bg-white text-gray-custom-400 hover:text-gray-custom-500 focus:outline-none"
+              class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none"
               @click="emit('close')"
             >
               <span class="sr-only">Close</span>
@@ -39,7 +39,7 @@ const emit = defineEmits<{
 
           <div :class="[fullscreen ? 'p-4 sm:p-6' : 'px-4 pt-5 pb-4 sm:p-6']">
             <div class="w-full">
-              <h3 class="text-lg font-medium leading-6 text-gray-custom-900 mb-4">
+              <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">
                 {{ title }}
               </h3>
               <div :class="{ 'mt-2': !fullscreen }">
