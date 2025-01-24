@@ -116,8 +116,8 @@ const submitComment = async () => {
 </script>
 
 <template>
-    <div v-if="!postError" class="min-h-screen bg-gray-50">
-        <div v-if="post" class="max-w-4xl mx-auto px-4 py-12">
+    <div v-if="!postError">
+        <div v-if="post" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <!-- Cover Image -->
             <div class="relative h-[480px] mb-12 rounded-2xl overflow-hidden shadow-xl">
                 <img
@@ -138,14 +138,14 @@ const submitComment = async () => {
             </div>
 
             <!-- Content -->
-            <div class="bg-white rounded-2xl shadow-sm p-8 mb-8">
+            <div class="bg-white rounded-2xl border-2 border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] p-6 mb-8">
                 <div class="prose prose-lg max-w-none">
                     <EditorJSRenderer :content="post.content" />
                 </div>
             </div>
 
             <!-- Interaction Bar -->
-            <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
+            <div class="bg-white rounded-2xl border-2 border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] p-6 mb-8">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-8">
                         <!-- Like Button -->
@@ -186,7 +186,7 @@ const submitComment = async () => {
             </div>
 
             <!-- Comments Section -->
-            <div class="bg-white rounded-2xl shadow-sm p-8">
+            <div class="bg-white rounded-2xl border-2 border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] p-6">
                 <h2 class="text-2xl font-bold mb-8">Comments ({{ commentCount }})</h2>
                 
                 <!-- New Comment Form -->
@@ -194,14 +194,14 @@ const submitComment = async () => {
                     <textarea
                         v-model="newComment"
                         placeholder="Share your thoughts..."
-                        class="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        class="w-full p-4 border-2 border-gray-100 rounded-xl focus:ring-2 focus:ring-gray-200 focus:border-gray-300 transition-all"
                         rows="3"
                     ></textarea>
                     <div class="mt-4 flex justify-end">
                         <button
                             @click="submitComment"
                             :disabled="isSubmitting || !newComment.trim()"
-                            class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+                            class="px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors font-medium"
                         >
                             {{ isSubmitting ? 'Posting...' : 'Post Comment' }}
                         </button>
@@ -210,7 +210,7 @@ const submitComment = async () => {
 
                 <!-- Comments List -->
                 <div class="space-y-6">
-                    <div v-for="comment in post.comments" :key="comment.id" class="border-b border-gray-100 pb-6">
+                    <div v-for="comment in post.comments" :key="comment.id" class="border-b-2 border-gray-100 pb-6">
                         <div class="flex justify-between items-start mb-2">
                             <div>
                                 <span class="font-semibold text-gray-900">{{ comment.author.name }}</span>
